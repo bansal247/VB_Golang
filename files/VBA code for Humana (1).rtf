@@ -1,0 +1,180 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Option Explicit\
+\
+Sub Humana_Sub(wb As Workbook)\
+    Dim SourceSheet As Worksheet\
+    Dim NextRow As Long\
+    Dim LastSourceRow As Long\
+    Dim filePath As String\
+    \
+    ' Get the full path of the file\
+    filePath = wb.FullName ' Capture the full path of the workbook\
+    \
+    ' Set the source worksheet to the first sheet of the carrier workbook\
+    Set SourceSheet = wb.Sheets(1)\
+    \
+    ' Restructure the whole file\
+    Call RestructureFile_Humana(SourceSheet)\
+    \
+    ' Amend Columns\
+    Call AmendColumns_Humana(SourceSheet)\
+    \
+    ' Find the next available row in Data_Sh\
+    NextRow = GetLastRow() + 1\
+    \
+    ' Find the last row with data in the source sheet\
+    LastSourceRow = SourceSheet.Cells(SourceSheet.Rows.Count, "A").End(xlUp).row\
+    \
+    ' Check if there is data to copy (i.e., more than just the header)\
+    If LastSourceRow > 1 Then\
+        ' Line Column\
+        Data_Sh.Range(lineCol & NextRow & ":" & lineCol & NextRow + LastSourceRow - 2).Value = "Health"\
+        \
+        ' Copy specific columns from the source sheet to Data_Sh\
+        Data_Sh.Range(carrierCol & NextRow & ":" & carrierCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("AU2:AU" & LastSourceRow).Value       'Created in the Amend Columns Sub\
+        \
+        Data_Sh.Range(agentNameCol & NextRow & ":" & agentNameCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("C2:C" & LastSourceRow).Value\
+        \
+        Data_Sh.Range(agentIDCol & NextRow & ":" & agentIDCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("D2:D" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(statementDateCol & NextRow & ":" & statementDateCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("B2:B" & LastSourceRow).Value\
+        \
+        Data_Sh.Range(clientFullNameCol & NextRow & ":" & clientFullNameCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("E2:E" & LastSourceRow).Value\
+        \
+        Data_Sh.Range(carrierMemberIDCol & NextRow & ":" & carrierMemberIDCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("F2:F" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(policyNumberCol & NextRow & ":" & policyNumberCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("AM2:AM" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(effectiveDateCol & NextRow & ":" & effectiveDateCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("AF2:AF" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(subLineCol & NextRow & ":" & subLineCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("AV2:AV" & LastSourceRow).Value       'Created in Amend Columns Sub\
+        \
+        Data_Sh.Range(planTypeCol & NextRow & ":" & planTypeCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("T2:T" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(contractCol & NextRow & ":" & contractCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("AN2:AN" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(premiumCol & NextRow & ":" & premiumCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("W2:W" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(agentSplitCol & NextRow & ":" & agentSplitCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("X2:X" & LastSourceRow).Value\
+            \
+        Data_Sh.Range(compRateCol & NextRow & ":" & compRateCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("V2:V" & LastSourceRow).Value\
+        \
+        Data_Sh.Range(commissionCol & NextRow & ":" & commissionCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("Y2:Y" & LastSourceRow).Value\
+        \
+        Data_Sh.Range(commissionActionCol & NextRow & ":" & commissionActionCol & NextRow + LastSourceRow - 2).Value = _\
+            SourceSheet.Range("AB2:AB" & LastSourceRow).Value\
+            \
+        ' Add hyperlinks to the Statement link column\
+        Data_Sh.Range(statementLinkCol & NextRow & ":" & statementLinkCol & NextRow + LastSourceRow - 2).Formula = _\
+            "=HYPERLINK(""" & filePath & """, """ & wb.name & """)"\
+        \
+        ' Call the subroutine to split the full client name\
+        Call SplitClientName3(NextRow, NextRow + LastSourceRow - 2)\
+        \
+        ' Call the subroutine to format agent names\
+        Call FormatAgentName1(NextRow, NextRow + LastSourceRow - 2)\
+    End If\
+    \
+End Sub\
+\
+\
+\
+\
+\
+\
+\
+Sub RestructureFile_Humana(Target_Sh As Worksheet)\
+\
+    Dim i As Long\
+    Dim lastRow As Long\
+    \
+    lastRow = Target_Sh.Range("A" & Rows.Count).End(xlUp).row\
+    \
+    For i = lastRow To 2 Step -1\
+        If Target_Sh.Range("C" & i).Value = "" Then\
+            \
+            Target_Sh.Rows(i).Delete\
+            \
+        End If\
+    Next i\
+\
+End Sub\
+\
+\
+Sub AmendColumns_Humana(Target_Sh As Worksheet)\
+    Dim lastRow As Long\
+    Dim i As Long\
+    Dim product As String\
+    Dim BlkBusCd As String\
+    \
+    lastRow = Target_Sh.Cells(Target_Sh.Rows.Count, "A").End(xlUp).row\
+    \
+    For i = 2 To lastRow\
+            \
+        'Agent Split\
+        Target_Sh.Range("X" & i).Value = Target_Sh.Range("X" & i).Value / 100\
+        \
+        'Carrier & Subline\
+        product = Trim(LCase(Target_Sh.Range("S" & i).Value))\
+        BlkBusCd = Trim(LCase(Target_Sh.Range("J" & i).Value))\
+        \
+        Select Case True\
+        \
+            Case product = "dental"\
+                Target_Sh.Range("AU" & i).Value = "Humana Dental"   'Carrier\
+                Target_Sh.Range("AV" & i).Value = "Dental"   'Subline\
+            \
+            Case product = "vision"\
+                Target_Sh.Range("AU" & i).Value = "Humana Vision"   'Carrier\
+                Target_Sh.Range("AV" & i).Value = "Vision"   'Subline\
+                \
+            Case BlkBusCd = "ms"\
+                Target_Sh.Range("AU" & i).Value = "Humana Med Supp"   'Carrier\
+                Target_Sh.Range("AV" & i).Value = "Med Supp"   'Subline\
+                \
+            Case BlkBusCd = "ma" And Trim(LCase(Target_Sh.Range("T" & i).Value)) = "pdp"\
+                Target_Sh.Range("AU" & i).Value = "Humana PDP"   'Carrier\
+                Target_Sh.Range("AV" & i).Value = "PDP"   'Subline\
+                \
+            Case BlkBusCd = "pdp"\
+                Target_Sh.Range("AU" & i).Value = "Humana PDP"   'Carrier\
+                Target_Sh.Range("AV" & i).Value = "PDP"   'Subline\
+                \
+            Case BlkBusCd = "ma"\
+                Target_Sh.Range("AU" & i).Value = "Humana MAPD"   'Carrier\
+                Target_Sh.Range("AV" & i).Value = "Med Adv"   'Subline\
+                \
+            Case Else\
+                Target_Sh.Range("AU" & i).Value = "Humana"\
+        End Select\
+        \
+        'Carrier Update\
+        If InStr(1, Target_Sh.Range("AB" & i).Value, "OVERRIDE", vbTextCompare) > 0 Then\
+            Target_Sh.Range("AU" & i).Value = Target_Sh.Range("AU" & i).Value & " override"\
+        End If\
+    \
+    Next i\
+\
+End Sub\
+}
